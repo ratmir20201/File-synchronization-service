@@ -1,4 +1,5 @@
 import json
+import os
 
 from utils.requests import make_request
 
@@ -34,24 +35,37 @@ class CloudStoringHelper:
             )
 
     def load(self, path: str):
+        """
+        Функция для загрузки файла из локальной директории в облако.
+
+        path(str) - путь до файла на локальном компьютере.
+        """
+        filename = os.path.basename(path)
         get_url_response = make_request(
-            url="https://cloud-api.yandex.net/v1/disk/resources/copy",
+            url="https://cloud-api.yandex.net/v1/disk/resources/upload",
             token=self.token,
-            method="post",
+            method="get",
             params={
-                "from": path,
-                "path": self.folder_path,
-            },  # Требуется не просто folder_path а к нему еще добавить название копируемого файла
+                "path": "{folder_path}/{filename}".format(
+                    folder_path=self.folder_path,
+                    filename=filename,
+                ),
+                "url": path,
+                "overwrite": True,
+            },
         )
         print(get_url_response, get_url_response.text)
-        # data = json.loads(get_url_response.text)
-        # upload_file_response = make_request(
-        #     url=data["href"],
-        #     token=self.token,
-        #     method="put",
-        # )
-        #
-        # return upload_file_response
+        data = json.loads(get_url_response.text)
+
+        with open(path, "rb") as file:
+            upload_file_response = make_request(
+                url=data["href"],
+                token=self.token,
+                method=data["method"],
+                data=file,
+            )
+
+        return upload_file_response
 
     def reload(self, path: str):
         pass

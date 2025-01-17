@@ -16,17 +16,35 @@ def make_request(
     token: str,
     method: str,
     params: dict = None,
+    data=None,
 ) -> requests.Response | dict[str, str]:
     method = method.upper()
 
     if method == "GET":
-        response = requests.get(url, headers=get_headers(token=token), params=params)
+        response = requests.get(
+            url,
+            headers=get_headers(token=token),
+            params=params,
+        )
     elif method == "PUT":
-        response = requests.put(url, headers=get_headers(token=token), params=params)
+        response = requests.put(
+            url,
+            headers=get_headers(token=token),
+            params=params,
+            data=data,
+        )
     elif method == "POST":
-        response = requests.post(url, headers=get_headers(token=token), params=params)
+        response = requests.post(
+            url,
+            headers=get_headers(token=token),
+            params=params,
+        )
     elif method == "DELETE":
-        response = requests.delete(url, headers=get_headers(token=token), params=params)
+        response = requests.delete(
+            url,
+            headers=get_headers(token=token),
+            params=params,
+        )
     else:
         return {"error_message": "Указан неверный HTTP метод."}
 
