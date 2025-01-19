@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 from typing import Any
 
+from utils.config import config
 from utils.handlers import error_handler
+from utils.logger import logger
 from utils.requests import make_request
 from utils.responses import create_error_response, create_good_response
 
@@ -10,15 +13,35 @@ from utils.responses import create_error_response, create_good_response
 class CloudStoringHelper:
     def __init__(self, token: str, folder_name: str):
         self.token = token
+        if not self._token_validator():
+            logger.error("Программа завершает свою работу из-за ошибки.")
+            sys.exit()
         self.folder_name = folder_name
         self.folder_path = "disk:/{folder_name}".format(
             folder_name=folder_name,
         )
 
-        self.__folder_create()
+        self._folder_create()
 
     @error_handler
-    def __folder_create(self):
+    def _token_validator(self):
+        response = make_request(
+            url="https://cloud-api.yandex.net/v1/disk",
+            token=self.token,
+            method="get",
+        )
+        if response.status_code == 200:
+            return True
+        logger.error(
+            "Ваш токен недействителен: {error_code} — {error_message}".format(
+                error_code=response.status_code,
+                error_message=response.text,
+            )
+        )
+        return False
+
+    @error_handler
+    def _folder_create(self):
         response = make_request(
             url="https://cloud-api.yandex.net/v1/disk/resources",
             token=self.token,
@@ -26,14 +49,14 @@ class CloudStoringHelper:
             params={"path": self.folder_path},
         )
         if response.status_code == 201:
-            print(
-                "Директория {folder_name} успешно создана.".format(
+            logger.info(
+                "Директория {folder_name} успешно создана на Яндекс диске.".format(
                     folder_name=self.folder_name,
                 )
             )
 
     @error_handler
-    def __get_url_for_load_request(self, path: str, overwrite: bool) -> dict[str, Any]:
+    def _get_url_for_load_request(self, path: str, overwrite: bool) -> dict[str, Any]:
         """Приватный метод для получения ссылки на загрузку или перезапись файла."""
 
         filename = os.path.basename(path)
@@ -53,10 +76,10 @@ class CloudStoringHelper:
         return data
 
     @error_handler
-    def __make_load_request(self, path: str, overwrite: bool = False) -> dict:
+    def _make_load_request(self, path: str, overwrite: bool = False) -> dict:
         """Приватный метод для исполнения загрузки или перезаписи файла на диске."""
 
-        data = self.__get_url_for_load_request(path=path, overwrite=overwrite)
+        data = self._get_url_for_load_request(path=path, overwrite=overwrite)
 
         with open(path, "rb") as file:
             upload_file_response = make_request(
@@ -81,7 +104,7 @@ class CloudStoringHelper:
 
         path(str) - путь до файла на локальном компьютере.
         """
-        response = self.__make_load_request(path=path, overwrite=False)
+        response = self._make_load_request(path=path, overwrite=False)
         return response
 
     @error_handler
@@ -91,7 +114,7 @@ class CloudStoringHelper:
 
         path(str) - путь до файла на локальном компьютере.
         """
-        response = self.__make_load_request(path=path, overwrite=True)
+        response = self._make_load_request(path=path, overwrite=True)
         return response
 
     @error_handler
@@ -123,3 +146,6 @@ class CloudStoringHelper:
         )
 
         return create_good_response(files=json.loads(response.text))
+
+
+helper = CloudStoringHelper(token=config.TOKEN, folder_name=config.CLOUD_FOLDER_NAME)
