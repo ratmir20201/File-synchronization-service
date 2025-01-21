@@ -1,12 +1,12 @@
 import functools
-from typing import Callable
+from typing import Any, Callable
 
 from utils.responses import create_error_response
 
 
-def error_handler(func: Callable):
+def error_handler(func: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any):
         try:
             return func(*args, **kwargs)
         except Exception as exc:

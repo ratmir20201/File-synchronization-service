@@ -1,11 +1,11 @@
 import sys
 
-from loguru import logger
+from loguru import logger as _logger
 
-logger.remove()
+_logger.remove()
 
 
-logger.add(
+_logger.add(
     "logfile.log",
     format="synchronizer {time} {level} {message}",
     level="INFO",
@@ -13,12 +13,13 @@ logger.add(
 )
 
 
-logger.add(
+_logger.add(
     sys.stdout,
-    format="synchronizer <green>{time}</green> <level>{level}</level> <cyan>{message}</cyan>",
+    format="synchronizer <green>{time}</green> <level>{level}</level> "
+    "<cyan>{message}</cyan>",
     level="INFO",
     colorize=True,
 )
 
 
-__all__ = ["logger"]
+logger = _logger
