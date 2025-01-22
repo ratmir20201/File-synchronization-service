@@ -28,10 +28,13 @@ def start_observer() -> None:
 
     try:
         observer.start()
-        time.sleep(config.periodicity)
+        while True:
+            time.sleep(config.periodicity)
     except KeyboardInterrupt:
         observer.stop()
-    observer.join()
+    finally:
+        observer.join()
+        logger.info("Программа синхронизации файлов завершает работу.")
 
 
 if __name__ == "__main__":
